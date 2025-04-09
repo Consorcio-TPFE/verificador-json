@@ -1,165 +1,162 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Imports padrão e de terceiros
 import pandas as pd
-import numpy as np
-import json
-import ast
-import chardet
-import re
-import logging
-from dotenv import load_dotenv
-import os
 from datetime import datetime
 
-# Configuração básica do log
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Imports dos módulos de processamento
+from json_para_df.planejado import process_planejado
+from json_para_df.previsto import process_previsto
+from json_para_df.producao import process_production
 
-# =============================================================================
-# Carregar municípios a partir de um arquivo JSON
-# =============================================================================
-def load_municipios(json_path):
-    try:
-        with open(json_path, 'r', encoding='utf-8') as file:
-            municipios = json.load(file)
-        logging.info("Municípios carregados com sucesso.")
-        return municipios
-    except FileNotFoundError:
-        logging.error(f"Erro: O arquivo '{json_path}' de municípios não foi encontrado.")
-        raise
-    except json.JSONDecodeError as e:
-        logging.error(f"Erro ao decodificar o JSON de municípios: {e}")
-        raise
+# Constantes com os caminhos dos arquivos JSON
+PREVISTO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\previsto-exportacao-wbs-2025-04-07T15-37-17.json"
+PRODUCAO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\producao-exportacao-wbs-2025-04-07T15-37-17.json"
+PLANEJADO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\planejado-exportacao-wbs-2025-04-07T15-37-17.json"
 
-# Exemplo de caminho para o arquivo de municípios
-municipios_json_path = os.getenv("MUNICIPIOS_JSON_PATH", "municipios.json")
-municipios = load_municipios(municipios_json_path)
-df_municipios = pd.DataFrame(list(municipios.items()), columns=["cod", "Municipio"])
 
-# =============================================================================
-# Funções auxiliares para carregar JSON
-# =============================================================================
-def detect_encoding(file_path):
-    logging.info(f"Detectando encoding do arquivo: {file_path}")
-    with open(file_path, 'rb') as file:
-        raw_data = file.read()
-        result = chardet.detect(raw_data)
-    encoding = result['encoding']
-    logging.info(f"Encoding detectado: {encoding}")
-    return encoding
+# Definição da classe para criação e formatação do arquivo Excel
+class ExcelCreator:
+    def __init__(self, file_name="output.xlsx"):
+        """
+        Inicializa a classe definindo o nome do arquivo e o objeto ExcelWriter
+        utilizando o engine 'xlsxwriter'.
+        """
+        self.file_name = file_name
+        self.writer = pd.ExcelWriter(self.file_name, engine='xlsxwriter')
 
-def load_json(file_path, encoding=None):
-    if encoding is None:
-        encoding = detect_encoding(file_path)
-    try:
-        logging.info(f"Carregando JSON do arquivo: {file_path}")
-        with open(file_path, 'r', encoding=encoding) as file:
-            data = json.load(file)
-        logging.info("JSON carregado com sucesso.")
-        return data
-    except FileNotFoundError:
-        logging.error(f"Erro: O arquivo '{file_path}' não foi encontrado.")
-        raise
-    except json.JSONDecodeError as e:
-        logging.error(f"Erro ao decodificar o JSON: {e}")
-        raise
+    def add_dataframe(self, df, sheet_name="Sheet1"):
+        """
+        Adiciona um DataFrame à planilha Excel com formatação de tabela e ajuste
+        automático da largura das colunas.
+        
+        Parâmetros:
+            df : pandas.DataFrame
+                DataFrame a ser adicionado.
+            sheet_name : str
+                Nome da planilha onde o DataFrame será escrito.
+        """
+        if df.empty:
+            print(f"DataFrame vazio. Não adicionando a planilha '{sheet_name}'.")
+            return
+        
+        # Escreve o DataFrame na planilha sem cabeçalho, iniciando na linha 1 (para cabeçalho customizado)
+        df.to_excel(self.writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
+        
+        # Acessa o workbook e a worksheet criados pelo ExcelWriter
+        workbook = self.writer.book
+        worksheet = self.writer.sheets[sheet_name]
+        
+        # Define o formato do cabeçalho da tabela
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'bottom',
+            'fg_color': '#D7E4BC',
+            'border': 1
+        })
+        
+        # Escreve os cabeçalhos na primeira linha com o formato definido
+        for col_num, header in enumerate(df.columns):
+            worksheet.write(0, col_num, header, header_format)
+        
+        # Define o intervalo da tabela (linha inicial, coluna inicial, linha final, coluna final)
+        max_row, max_col = df.shape
+        table_range = [0, 0, max_row, max_col - 1]
+        
+        # Cria a tabela formatada com os cabeçalhos
+        worksheet.add_table(table_range[0], table_range[1], table_range[2], table_range[3],
+                              {'columns': [{'header': col} for col in df.columns]})
+        
+        # Ajusta a largura de cada coluna para acomodar os dados
+        for i, col in enumerate(df.columns):
+            max_length = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, max_length)
 
-# =============================================================================
-# Processamento dos dados PREVISTOS
-# =============================================================================
-def process_previsto(file_path):
-    data = load_json(file_path)
-    linear = []
-    localizada = []
-    ramais = []
-    economias = []
-    logging.info("Iniciando o processamento dos dados previstos.")
-    for contrato_item in data:
-        contrato = contrato_item.get('contrato')
-        if contrato_item.get('linear'):
-            for item in contrato_item.get('linear'):
-                item['contrato'] = contrato
-                item['n_trechos'] = len(item.get('trechos', []))
-                linear.append(item)
-        if contrato_item.get('localizada'):
-            for item in contrato_item.get('localizada'):
-                item['contrato'] = contrato
-                localizada.append(item)
-        if contrato_item.get('ramais'):
-            for item in contrato_item.get('ramais'):
-                item['contrato'] = contrato
-                ramais.append(item)
-        if contrato_item.get('economias'):
-            for item in contrato_item.get('economias'):
-                item['contrato'] = contrato
-                economias.append(item)
-    df_linear = pd.DataFrame(linear)
-    if 'trechos' in df_linear.columns:
-        df_linear['trechos'] = df_linear['trechos'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-        df_linear = df_linear.explode('trechos', ignore_index=True)
-        if not df_linear.empty and isinstance(df_linear.iloc[0]['trechos'], dict):
-            trechos_expanded = pd.json_normalize(df_linear['trechos'])
-            df_linear = pd.concat([df_linear.drop(columns=['trechos']), trechos_expanded], axis=1)
-    df_localizada = pd.DataFrame(localizada)
-    df_ramais = pd.DataFrame(ramais)
-    df_economias = pd.DataFrame(economias)
-    logging.info("Processamento de dados previstos concluído.")
-    return df_linear, df_localizada, df_ramais, df_economias
+    def save(self):
+        """
+        Salva o arquivo Excel criado com todas as planilhas adicionadas.
+        """
+        self.writer.close()
 
-# =============================================================================
-# Função para extrair código do município
-# =============================================================================
-def find_municipio_code(texto):
-    valor = texto.rstrip('0')
-    return valor[-5:-2]
 
-# =============================================================================
-# Carregar variáveis de ambiente e processar dados
-# =============================================================================
-load_dotenv()
-previsto = os.getenv("PREVISTO_JSON_PATH")
-if not previsto:
-    logging.error("O caminho para o arquivo JSON de previsto não foi encontrado na variável de ambiente.")
-    raise ValueError("Caminho do JSON não definido.")
+def get_errors(df):
+    """
+    Filtra e retorna os registros que possuem erro.
 
-df_linear, df_localizada, df_ramais, df_economias = process_previsto(previsto)
+    Parâmetros:
+        df : pandas.DataFrame
+            DataFrame a ser filtrado.
+    
+    Retorna:
+        pandas.DataFrame
+            DataFrame com os registros que não estão OK (coluna 'is_ok' == False)
+            ou que são duplicados.
+    """
+    if df.empty:
+        return df.copy()
+    return df[~df["is_ok"]].copy()
 
-# =============================================================================
-# Processamento dos registros sem endereço em 'localizada'
-# =============================================================================
-sem_endereco = df_localizada[(df_localizada['endereco'] == '') | (df_localizada['endereco'].isna())].copy()
-if not sem_endereco.empty:
-    sem_endereco['cod'] = sem_endereco['codigo'].apply(find_municipio_code)
-    sem_endereco = pd.merge(sem_endereco, df_municipios, on='cod', how='left')
-    logging.info(f"{len(sem_endereco)} registros de 'localizada' sem endereço encontrados.")
-else:
-    logging.info("Nenhum registro sem endereço encontrado em 'localizada'.")
 
-# =============================================================================
-# Geração do Excel com múltiplas sheets (dados com erros e registros sem endereço)
-# =============================================================================
-sheets = {}
+def process_producao(excel_creator):
+    """
+    Processa os dados de produção e adiciona as planilhas de erros ao Excel.
+    """
+    # Processa os dados de produção
+    df_codes, df_trechos, df_ramais, df_localizadas = process_production(PRODUCAO_FILE)
+    
+    # Filtra os códigos com erro ou duplicados
+    df_codes_erros = df_codes[(~df_codes["is_ok"]) | (df_codes["duplicado"] == True)]
+    excel_creator.add_dataframe(df_codes_erros, sheet_name="Produção CodWBS")
+    
+    # Adiciona as demais planilhas de erros
+    excel_creator.add_dataframe(get_errors(df_trechos), sheet_name="Produção Trechos")
+    excel_creator.add_dataframe(get_errors(df_ramais), sheet_name="Produção Ramais")
+    excel_creator.add_dataframe(get_errors(df_localizadas), sheet_name="Produção Localizadas")
 
-# Validação para 'localizadas' incompletas (exceto ausência de endereço)
-mask_localizada_incomplete = (
-    (df_localizada['codigo'].isnull() | (df_localizada['codigo'] == '')) |
-    (df_localizada['descricao'].isnull() | (df_localizada['descricao'] == ''))
-)
-df_localizada_incomplete = df_localizada[mask_localizada_incomplete].copy()
-if not df_localizada_incomplete.empty:
-    sheets['Localizadas_Incompletas'] = df_localizada_incomplete
 
-# Adiciona a sheet com os registros sem endereço (enriquecidos com o município)
-if not sem_endereco.empty:
-    sheets['Localizadas_Sem_Endereco'] = sem_endereco
+def process_previsto_data(excel_creator):
+    """
+    Processa os dados previstos e adiciona as planilhas de erros ao Excel.
+    """
+    df_linear, df_linear_trechos, df_localizada, df_ramais, df_economias = process_previsto(PREVISTO_FILE)
+    
+    excel_creator.add_dataframe(get_errors(df_linear), sheet_name="Previsto Linear")
+    excel_creator.add_dataframe(get_errors(df_linear_trechos), sheet_name="Previsto Linear Trechos")
+    excel_creator.add_dataframe(get_errors(df_localizada), sheet_name="Previsto Localizadas")
+    excel_creator.add_dataframe(get_errors(df_ramais), sheet_name="Previsto Ramais")
+    excel_creator.add_dataframe(get_errors(df_economias), sheet_name="Previsto Economias")
 
-if not sheets:
-    sheets['Sem_Erros'] = pd.DataFrame({"Mensagem": ["Nenhum erro encontrado."]})
-    logging.info("Nenhum erro encontrado em todas as validações.")
 
-# =============================================================================
-# Gerar o nome do arquivo Excel com data e horário
-# =============================================================================
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = f'checagens_formatado_{timestamp}.xlsx'
-with pd.ExcelWriter(output_file) as writer:
-    for sheet_name, df in sheets.items():
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
-logging.info(f"Arquivo '{output_file}' gerado com sucesso.")
+def process_planejado_data(excel_creator):
+    """
+    Processa os dados planejados e adiciona a planilha de erros ao Excel.
+    """
+    df_planejado = process_planejado(PLANEJADO_FILE)
+    excel_creator.add_dataframe(get_errors(df_planejado), sheet_name="Planejado")
+
+
+def main():
+    """
+    Função principal que orquestra o processamento dos dados e a geração do arquivo Excel.
+    """
+    # Obtém a data atual para incluir no nome do arquivo
+    current_datetime = datetime.now().strftime("%Y-%m-%d")
+    output_file = f"PRODUÇÃO_erros_json_{current_datetime}.xlsx"
+    
+    # Inicializa o ExcelCreator
+    excel_creator = ExcelCreator(output_file)
+    
+    # Processa os dados de Produção, Previsto e Planejado
+    process_producao(excel_creator)
+    process_previsto_data(excel_creator)
+    process_planejado_data(excel_creator)
+    
+    # Salva o arquivo Excel final
+    excel_creator.save()
+    print(f"Arquivo '{output_file}' gerado com sucesso.")
+
+
+if __name__ == '__main__':
+    main()

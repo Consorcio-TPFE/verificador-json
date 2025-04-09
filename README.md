@@ -2,7 +2,12 @@
 
 Este projeto tem como objetivo processar e validar dados provenientes de arquivos JSON referentes à produção e à previsão de contratos. O script realiza diversas etapas, desde a detecção do encoding dos arquivos até a geração de um relatório de erros em um arquivo Excel.
 
+
 ## Funcionalidades
+
+
+item(8) + D2(fator fisico d(2)) + D3(tipo obra d(2)) + Municipio 
+
 
 - **Detecção de Encoding:** Utiliza o módulo `chardet` para identificar o encoding do arquivo JSON.
 - **Carregamento de JSON:** Faz o carregamento e decodificação dos arquivos JSON, tratando exceções como arquivo não encontrado ou erros na decodificação.
