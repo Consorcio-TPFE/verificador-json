@@ -39,8 +39,9 @@ item(8) + D2(fator fisico d(2)) + D3(tipo obra d(2)) + Municipio
    Crie um arquivo `.env` na raiz do projeto e defina as seguintes variáveis com os caminhos dos arquivos JSON:
 
    ```env
-   PRODUCAO_JSON_PATH=path/para/arquivo_producao.json
-   PREVISTO_JSON_PATH=path/para/arquivo_previsto.json
+   PREVISTO_FILE_PATH=path/para/arquivo_previsto.json
+   PRODUCAO_FILE_PATH=path/para/arquivo_producao.json
+   PLANEJADO_FILE_PATH=path/para/arquivo_planejado.json
    ```
 
 ## Como Executar

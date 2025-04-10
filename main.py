@@ -4,16 +4,21 @@
 # Imports padrão e de terceiros
 import pandas as pd
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
 # Imports dos módulos de processamento
 from json_para_df.planejado import process_planejado
 from json_para_df.previsto import process_previsto
 from json_para_df.producao import process_production
 
+# Carrega as variáveis do arquivo .env
+load_dotenv(dotenv_path=".env")
+
 # Constantes com os caminhos dos arquivos JSON
-PREVISTO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\previsto-exportacao-wbs-2025-04-07T15-37-17.json"
-PRODUCAO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\producao-exportacao-wbs-2025-04-07T15-37-17.json"
-PLANEJADO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\planejado-exportacao-wbs-2025-04-07T15-37-17.json"
+PREVISTO_FILE = os.getenv("PREVISTO_FILE_PATH")
+PRODUCAO_FILE = os.getenv("PRODUCAO_FILE_PATH")
+PLANEJADO_FILE = os.getenv("PLANEJADO_FILE_PATH")
 
 
 # Definição da classe para criação e formatação do arquivo Excel
