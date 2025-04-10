@@ -29,8 +29,10 @@ item(8) + D2(fator fisico d(2)) + D3(tipo obra d(2)) + Municipio
    Execute o comando abaixo para instalar as bibliotecas necessárias:
 
    ```bash
-   pip install pandas numpy chardet python-dotenv
+   pip install -r requirements.txt
    ```
+   
+   > **Nota:** Sempre que uma nova dependência for adicionada ao projeto, atualize o arquivo `requirements.txt` com o seguinte comando: *pip freeze > requirements.txt*
 
 2. **Configuração das Variáveis de Ambiente:**
 
