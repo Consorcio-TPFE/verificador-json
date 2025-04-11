@@ -24,7 +24,42 @@ item(8) + D2(fator fisico d(2)) + D3(tipo obra d(2)) + Municipio
 
 ## Configuração do Ambiente
 
-1. **Instalação das Dependências:**
+1. **Configuração do venv (opcional):**
+
+    1. **Instalando o `venv`** (para o Windows):
+      O `venv` já vem incluído nas versões mais recentes do Python (a partir do Python 3.3). Então, não é necessário instalar nada separadamente. Caso o Python não esteja instalado, você pode baixar e instalar a partir do [site oficial do Python](https://www.python.org/downloads/).
+
+    2. **Criando o Ambiente Virtual**:
+      Navegue até o diretório do seu projeto e execute o comando abaixo para criar o ambiente virtual:
+      
+        - **No Windows**:
+          ```bash
+          python -m venv myenv
+          ```
+        
+        - **No Linux/macOS**:
+          ```bash
+          python3 -m venv myenv
+          ```
+
+    3. **Ativando o venv**:
+      
+        - **No Windows**:
+          Para ativar o ambiente virtual, execute o seguinte comando:
+          ```bash
+          .\myenv\Scripts\activate
+          ```
+
+
+        > **Nota:** Uma vez ativado, qualquer comando Python ou pip utilizará o interpretador Python e as bibliotecas do ambiente.
+
+    **Desativando o venv**:
+      Para desativar o ambiente virtual, basta rodar o comando:
+      ```bash
+      deactivate
+      ```
+
+2. **Instalação das Dependências:**
 
    Execute o comando abaixo para instalar as bibliotecas necessárias:
 
@@ -34,7 +69,7 @@ item(8) + D2(fator fisico d(2)) + D3(tipo obra d(2)) + Municipio
    
    > **Nota:** Sempre que uma nova dependência for adicionada ao projeto, atualize o arquivo `requirements.txt` com o seguinte comando: *pip freeze > requirements.txt*
 
-2. **Configuração das Variáveis de Ambiente:**
+3. **Configuração das Variáveis de Ambiente:**
 
    Crie um arquivo `.env` na raiz do projeto e defina as seguintes variáveis com os caminhos dos arquivos JSON:
 
