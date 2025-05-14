@@ -40,11 +40,12 @@ class Campo:
     Classe para definição de campos com seu nome, tipo, obrigatoriedade
     e aceitação de nulos, além de métodos para validação dos valores.
     """
-    def __init__(self, nome: str, tipo=str, obrigatorio=False, pode_nulo=False):
+    def __init__(self, nome: str, tipo=str, obrigatorio=False, pode_nulo=False, opcoes=None):
         self.nome = nome
         self.tipo = tipo
         self.obrigatorio = obrigatorio
         self.pode_nulo = pode_nulo
+        self.opcoes = opcoes
 
     def validar(self, valor, pattern=None):
         erros = []
@@ -80,8 +81,12 @@ class Campo:
         
         if not isinstance(valor, str):
             erros.append(f'Campo: {self.nome}, tipo errado {self.tipo} -> {type(valor)}')
+
         elif self.obrigatorio and valor.strip() == "":
             erros.append(f'Campo: {self.nome}, está vazio')
+
+        elif self.opcoes and valor not in self.opcoes:
+            erros.append(f'Campo: {self.nome}, valor não permitido -> {valor} (opções: {self.opcoes})')
         
         return erros
 
@@ -123,7 +128,9 @@ class Linear:
         errors.extend(Campo('descricao', str, True).validar(self.descricao))
         errors.extend(Campo('unidade', str, False).validar(self.unidade))
         errors.extend(Campo('quant_prevista', float, True).validar(self.quant_prevista))
-        errors.extend(Campo('tipo_conduto', str, False).validar(self.tipo_conduto))
+
+        #^(rce)|(ct)|(it)|(em)|(lr)|(in)|(ad)|(rd)
+        errors.extend(Campo('tipo_conduto', str, False, False, ["RCE", "CT", "IT", "EM", "LR", "IN", "AD", "RD"]).validar(self.tipo_conduto))
         errors.extend(Campo('PEP', str, True).validar(self.PEP))
         errors.extend(Campo('valor', float, False).validar(self.valor))
         return errors, len(errors) == 0
@@ -171,9 +178,9 @@ class Trecho:
         errors.extend(Campo('montante', str, True).validar(self.montante))
         errors.extend(Campo('extensao', float, True).validar(self.extensao))
         errors.extend(Campo('diametro', int, True).validar(self.diametro))
-        errors.extend(Campo('material', str, False, True).validar(self.material))
-        errors.extend(Campo('metodo_exec', str, False, True).validar(self.metodo_exec))
-        errors.extend(Campo('detalhe_metodo', str, False, True).validar(self.detalhe_metodo))
+        errors.extend(Campo('material', str, False, True, ['PVC', 'PEAD', 'CA', 'MBV', 'FoFo', 'ACO']).validar(self.material))
+        errors.extend(Campo('metodo_exec', str, False, True, ['VCA', 'MND', 'AE']).validar(self.metodo_exec))
+        errors.extend(Campo('detalhe_metodo', str, False, True, ['FD', 'TC', 'NATM', 'TL']).validar(self.detalhe_metodo))
         errors.extend(Campo('endereco', str, True).validar(self.endereco))
         return errors, len(errors) == 0
 
@@ -246,7 +253,7 @@ class Ramal:
     def validate(self):
         errors = []
         errors.extend(Campo('codigo', str, True).validar(self.codigo))
-        errors.extend(Campo('tipo', str, True).validar(self.tipo))
+        errors.extend(Campo('tipo', str, True, ['PA', 'TA', 'E', 'TO', 'PO']).validar(self.tipo))
         # A validação para 'completa' pode ser implementada se necessário.
         errors.extend(Campo('descricao', str, True).validar(self.descricao))
         errors.extend(Campo('quant_prevista', int, False).validar(self.quant_prevista))

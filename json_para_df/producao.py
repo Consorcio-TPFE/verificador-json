@@ -21,10 +21,11 @@ class Campo:
     Classe para definição de campos com seu nome, tipo e obrigatoriedade,
     além de métodos para validação dos valores.
     """
-    def __init__(self, nome: str, tipo=str, obrigatorio=False):
+    def __init__(self, nome: str, tipo=str, obrigatorio=False, opcoes=None):
         self.nome = nome
         self.tipo = tipo
         self.obrigatorio = obrigatorio
+        self.opcoes = opcoes
 
     def validar(self, valor, pattern=None):
         if self.tipo in [int, float]:
@@ -66,6 +67,10 @@ class Campo:
         if self.obrigatorio and valor.strip() == "":
             # erros.append(f'Campo: {self.nome}, está vazio')
             erros.append({'campo': self.nome, 'erro': "Campo é obrigatório, mas tem valor vazio"})
+
+        if self.opcoes and valor not in self.opcoes:
+            # erros.append(f'Campo: {self.nome}, valor inválido. Opções válidas: {self.opcoes}')
+            erros.append({'campo': self.nome, 'erro': f"Valor inválido. Opções válidas: {self.opcoes}"})
 
 
         return erros
@@ -142,7 +147,7 @@ class Trecho:
         errors.extend(Campo('montante', str, True).validar(self.montante))
         errors.extend(Campo('extensao', float, True).validar(self.extensao))
         errors.extend(Campo('diametro', int, True).validar(self.diametro))
-        errors.extend(Campo('material', str, True).validar(self.material))
+        errors.extend(Campo('material', str, True, ['PVC', 'PEAD', 'CA', 'MBV', 'FoFo', 'ACO']).validar(self.material))
         errors.extend(Campo('metodo_exec', str, True).validar(self.metodo_exec))
         errors.extend(Campo('endereco', str, True).validar(self.endereco))
         return errors, len(errors) == 0
