@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Imports padrão e de terceiros
+from bd import conectar_bd, executar_select
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
@@ -114,11 +115,14 @@ def process_producao(excel_creator):
     # Filtra os códigos com erro ou duplicados
     df_codes_erros = df_codes[(~df_codes["is_ok"]) | (df_codes["duplicado"] == True)]
     excel_creator.add_dataframe(df_codes_erros, sheet_name="Produção CodWBS")
+
+
     
     # Adiciona as demais planilhas de erros
     excel_creator.add_dataframe(get_errors(df_trechos), sheet_name="Produção Trechos")
     excel_creator.add_dataframe(get_errors(df_ramais), sheet_name="Produção Ramais")
     excel_creator.add_dataframe(get_errors(df_localizadas), sheet_name="Produção Localizadas")
+    return df_codes, df_trechos, df_ramais, df_localizadas
 
 
 def process_previsto_data(excel_creator):
@@ -132,14 +136,17 @@ def process_previsto_data(excel_creator):
     excel_creator.add_dataframe(get_errors(df_localizada), sheet_name="Previsto Localizadas")
     excel_creator.add_dataframe(get_errors(df_ramais), sheet_name="Previsto Ramais")
     excel_creator.add_dataframe(get_errors(df_economias), sheet_name="Previsto Economias")
+    return df_linear, df_linear_trechos, df_localizada, df_ramais, df_economias
 
 
 def process_planejado_data(excel_creator):
     """
     Processa os dados planejados e adiciona a planilha de erros ao Excel.
     """
+
     df_planejado = process_planejado(PLANEJADO_FILE)
     excel_creator.add_dataframe(get_errors(df_planejado), sheet_name="Planejado")
+    return df_planejado
 
 
 def main():
@@ -148,16 +155,31 @@ def main():
     """
     # Obtém a data atual para incluir no nome do arquivo
     current_datetime = datetime.now().strftime("%Y-%m-%d")
-    output_file = f"PRODUÇÃO_erros_json_{current_datetime}.xlsx"
+    output_file = f"Erros_json_{current_datetime}.xlsx"
     
     # Inicializa o ExcelCreator
     excel_creator = ExcelCreator(output_file)
     
     # Processa os dados de Produção, Previsto e Planejado
     process_producao(excel_creator)
-    process_previsto_data(excel_creator)
-    process_planejado_data(excel_creator)
-    
+    df_linear, df_linear_trechos, df_localizada, df_ramais, df_economias = process_previsto_data(excel_creator)
+    df_planejado = process_planejado_data(excel_creator)
+
+    # pegar todos os conjuntos de contrato, codigo dos previstos e planejados
+    df_codigos_previstos = pd.concat([df_linear, df_linear_trechos, df_localizada, df_ramais, df_economias], ignore_index=True)
+    df_codigos_previstos = df_codigos_previstos[["contrato", "codigo"]].drop_duplicates()
+    df_codigos_planejados = df_planejado[["contrato", "codigo"]].drop_duplicates()
+
+    # preciso descobrir códigos que estão no planejado e não no preisto
+    df_codigos_faltantes = pd.merge(df_codigos_planejados, df_codigos_previstos, how="left", on=["contrato", 'codigo'], indicator=True)
+    df_codigos_faltantes = df_codigos_faltantes[df_codigos_faltantes["_merge"] == "left_only"]
+
+    # Adiciona a planilha de códigos faltantes
+    if df_codigos_faltantes.empty:
+        print("Não foram encontrados códigos faltantes.")
+    else:
+        excel_creator.add_dataframe(df_codigos_faltantes, sheet_name="Planejado não está no Previsto")
+
     # Salva o arquivo Excel final
     excel_creator.save()
     print(f"Arquivo '{output_file}' gerado com sucesso.")

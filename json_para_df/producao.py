@@ -148,7 +148,7 @@ class Trecho:
         errors.extend(Campo('extensao', float, True).validar(self.extensao))
         errors.extend(Campo('diametro', int, True).validar(self.diametro))
         errors.extend(Campo('material', str, True, ['PVC', 'PEAD', 'CA', 'MBV', 'FoFo', 'ACO']).validar(self.material))
-        errors.extend(Campo('metodo_exec', str, True).validar(self.metodo_exec))
+        errors.extend(Campo('metodo_exec', str, True, ['VCA', 'MND']).validar(self.metodo_exec))
         errors.extend(Campo('endereco', str, True).validar(self.endereco))
         return errors, len(errors) == 0
 
