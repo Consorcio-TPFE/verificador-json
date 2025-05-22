@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# planilhas, seja de input ou output
+*.xlsx
+
 # Distribution / packaging
 .Python
 build/
