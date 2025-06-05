@@ -27,9 +27,9 @@ load_dotenv()
 # =============================================================================
 # Configurações Globais
 # =============================================================================
-PREVISTO_JSON_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\previsto-exportacao-wbs-2025-04-07T15-37-17.json"
+#PREVISTO_JSON_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\previsto-exportacao-wbs-2025-04-07T15-37-17.json"
 
-PREVISTO_JSON_FILE = os.getenv('PREVISTO_JSON_FILE')
+#PREVISTO_JSON_FILE = os.getenv('PREVISTO_JSON_FILE')
 
 # =============================================================================
 # Classes de Validação e Representação dos Dados
@@ -168,19 +168,19 @@ class Trecho:
             'endereco': self.endereco,
             'errors': self.errors,
             'is_ok': self.is_ok,
-            'merged': self.contrato + " | " + self.codigo + " | " + self.jusante + " | " +
-                      self.montante + " | " + str(self.material) + " | " + str(self.metodo_exec)
+            'merged': str(self.contrato) + " | " + str(self.codigo) + " | " + str(self.jusante) + " | " +
+                      str(self.montante) + " | " + str(self.material) + " | " + str(self.metodo_exec)
         }
     
     def validate(self):
         errors = []
         errors.extend(Campo('jusante', str, True).validar(self.jusante))
         errors.extend(Campo('montante', str, True).validar(self.montante))
-        errors.extend(Campo('extensao', float, True).validar(self.extensao))
-        errors.extend(Campo('diametro', int, True).validar(self.diametro))
+        errors.extend(Campo('extensao', float, True, False).validar(self.extensao))
+        errors.extend(Campo('diametro', int, False, True).validar(self.diametro))
         errors.extend(Campo('material', str, False, True, ['PVC', 'PEAD', 'CA', 'MBV', 'FoFo', 'ACO']).validar(self.material))
         errors.extend(Campo('metodo_exec', str, False, True, ['VCA', 'MND', 'AE']).validar(self.metodo_exec))
-        errors.extend(Campo('detalhe_metodo', str, False, True, ['HDD', 'VCA','FD', 'TC', 'NATM', 'TL']).validar(self.detalhe_metodo))
+        errors.extend(Campo('detalhe_metodo', str, False, True, ['HDD', 'VCA','FD', 'TC', 'NATM', 'TL', 'TRAVESSIA']).validar(self.detalhe_metodo))
         errors.extend(Campo('endereco', str, True).validar(self.endereco))
         return errors, len(errors) == 0
 
