@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # =============================================================================
 # Configurações Globais
 # =============================================================================
-PRODUCAO_FILE = r"C:\Users\AndréTakeoLoschnerFu\OneDrive - TPF-EGC\Documentos\Entregas-json\jsons-07-04-2025\producao-exportacao-wbs-2025-04-07T15-37-17.json"
+
 
 # =============================================================================
 # Classes de Validação e Representação dos Dados

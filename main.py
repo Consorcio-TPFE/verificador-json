@@ -154,7 +154,7 @@ def main():
     Função principal que orquestra o processamento dos dados e a geração do arquivo Excel.
     """
     # Obtém a data atual para incluir no nome do arquivo
-    current_datetime = datetime.now().strftime("%Y-%m-%d")
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M")
     output_file = f"Erros_json_{current_datetime}.xlsx"
     
     # Inicializa o ExcelCreator
