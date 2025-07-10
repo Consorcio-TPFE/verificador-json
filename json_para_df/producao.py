@@ -270,7 +270,8 @@ def process_production(file_path):
     details_unknown = []  # Opcional: para itens que não se encaixam em nenhuma classe conhecida
 
     logging.info("Iniciando o processamento dos dados de produção.")
-    
+    logging.info(f"Caminho do arquivo: {file_path}")
+
     for entry in data:
         mes_ref = entry.get('mes_ref')
         for prod in entry.get('producao', []):

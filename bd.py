@@ -17,9 +17,9 @@ def conectar_bd() -> pyodbc.Connection:
         conexao = pyodbc.connect(
             'DRIVER={ODBC Driver 17 for SQL Server};'
             'SERVER=HWC-HWP-5176900;'
-            'DATABASE=SABESP_BI;'
-            'UID=sabesp_bi;'
-            'PWD=S5c0W37k#3QR;'
+            'DATABASE=SABESP_BI_EM;'
+            'UID=sabesp_bi_em;'
+            'PWD=39QZPbQL2c0;'
         )
         logger.info("Conexão com o banco de dados estabelecida com sucesso.")
         return conexao
