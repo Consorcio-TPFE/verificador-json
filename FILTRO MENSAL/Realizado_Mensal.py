@@ -2,10 +2,10 @@ import os
 import json
 
 # ================ CONFIGURAÇÃO ================
-PASTA_ENTRADA = "JSON 202507"
-CAMINHO_MAIO = os.path.join(PASTA_ENTRADA, "producao-2025-06-12.json")
-CAMINHO_JUNHO = os.path.join(PASTA_ENTRADA, "producao-2025-07-14.json")
-CAMINHO_SAIDA = os.path.join(PASTA_ENTRADA, "producao-2025-07-14-filtrado.json")
+PASTA_ENTRADA = "JSON 202509"
+CAMINHO_MAIO = os.path.join(PASTA_ENTRADA, "producao-exportacao-wbs-2025-08-11T17-30-52.json")
+CAMINHO_JUNHO = os.path.join(PASTA_ENTRADA, "producao-exportacao-wbs-2025-09-12T15-22-57.json")
+CAMINHO_SAIDA = os.path.join(PASTA_ENTRADA, "producao-2025-09-filtrado.json")
 # ==============================================
 
 def carregar_enderecos(caminho_json):
